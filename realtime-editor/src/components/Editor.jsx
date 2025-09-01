@@ -1,28 +1,52 @@
 //when strict mode is not enabled
-import React, { useEffect } from 'react'
-import Codemirror from 'codemirror';
-import 'codemirror/lib/codemirror.css';
-import 'codemirror/mode/javascript/javascript';
-import 'codemirror/theme/dracula.css';
-import 'codemirror/addon/edit/closetag';
-import 'codemirror/addon/edit/closebrackets';
+import React, { useEffect, useRef } from "react";
+import Codemirror from "codemirror";
+import "codemirror/lib/codemirror.css";
+import "codemirror/mode/javascript/javascript";
+import "codemirror/theme/dracula.css";
+import "codemirror/addon/edit/closetag";
+import "codemirror/addon/edit/closebrackets";
+import ACTIONS from "../Actions";
 
-const Editor = () => {
+const Editor = ({ socketRef, roomId }) => {
+  const editorRef = useRef(null);
 
-    useEffect(()=>{
-        async function init() {
-            Codemirror.fromTextArea(document.getElementById('realtimeEditor'), {
-                mode: {name: 'javascript', json:true},
-                theme: 'dracula',
-                autoCloseTags : true,
-                autoCloseBrackets: true,
-                lineNumbers: true
-            });
+  useEffect(() => {
+    async function init() {
+      editorRef.current = Codemirror.fromTextArea(
+        document.getElementById("realtimeEditor"),
+        {
+          mode: { name: "javascript", json: true },
+          theme: "dracula",
+          autoCloseTags: true,
+          autoCloseBrackets: true,
+          lineNumbers: true,
         }
-        init();
-    },[]);
+      );
 
-    return <textarea id='realtimeEditor'></textarea>
+      socketRef.current.on(ACTIONS.CODE_CHANGE, ({ code }) => {
+        if (code !== null) {
+          editorRef.current.setValue(code);
+        }
+      });
+
+      editorRef.current.on("change", (instance, changes) => {
+        //console.log('changes', changes);
+        const { origin } = changes;
+        const code = instance.getValue();
+        if (origin !== "setValue") {
+          socketRef.current.emit(ACTIONS.CODE_CHANGE, {
+            roomId,
+            code,
+          });
+        }
+        //console.log(code);
+      });
+    }
+    init();
+  }, []);
+
+  return <textarea id="realtimeEditor"></textarea>;
 };
 
 // export default Editor //when strict mode is enabled
@@ -39,7 +63,7 @@ const Editor = () => {
 
 //     useEffect(() => {
 //         if (editorRef.current) {
-//             const editor = Codemirror.fromTextArea(editorRef.current, { 
+//             const editor = Codemirror.fromTextArea(editorRef.current, {
 //                 mode: { name: 'javascript', json: true },
 //                 theme: 'dracula',
 //                 autoCloseTags: true,
@@ -51,7 +75,7 @@ const Editor = () => {
 //                 editor.toTextArea();
 //             };
 //         }
-//     }, []); 
+//     }, []);
 //     return <textarea ref={editorRef} />;
 // };
 
