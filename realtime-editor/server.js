@@ -15,7 +15,7 @@ const io = new Server(server);
 // Correct Way
 app.use(express.static('dist'));
 
-app.get('*', (req, res) => {
+app.use((req, res, next) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
