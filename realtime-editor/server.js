@@ -2,10 +2,22 @@ import express from "express";
 import http from "http";
 import { Server } from "socket.io";
 import ACTIONS from "./src/Actions.js";
+import path from "path";
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+// Correct Way
+app.use(express.static('dist'));
+
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+});
 
 const userSocketMap = {};
 
